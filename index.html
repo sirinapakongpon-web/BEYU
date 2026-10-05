@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Simple Mobile AR Lab - Butterfly & Tulip</title>
+  
+  <!-- A-Frame Library -->
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <!-- AR.js for A-Frame -->
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+
+  <script>
+    // สคริปต์ควบคุมการพัดกระพือของปีกผีเสื้อและการบินวนรอบดอกทิวลิป
+    AFRAME.registerComponent('butterfly-animation', {
+      init: function () {
+        this.leftWing = this.el.querySelector('.wing-left');
+        this.rightWing = this.el.querySelector('.wing-right');
+        this.time = 0;
+      },
+      tick: function (t, dt) {
+        if (!dt) return;
+        this.time += dt * 0.008; // ความเร็วในการขยับปีก
+
+        // ขยับปีกขึ้น-ลงด้วย Sine wave
+        const wingAngle = Math.sin(this.time * 2) * 45;
+        if (this.leftWing && this.rightWing) {
+          this.leftWing.setAttribute('rotation', `0 0 ${wingAngle}`);
+          this.rightWing.setAttribute('rotation', `0 0 ${-wingAngle}`);
+        }
+      }
+    });
+  </script>
+</head>
+
+<body style="margin: 0; overflow: hidden;">
+
+  <!-- ฉาก A-Frame AR.js Setup -->
+  <a-scene 
+    embedded 
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    vr-mode-ui="enabled: false">
+
+    <!-- แสงสว่างในฉาก -->
+    <a-entity light="type: ambient; color: #FFF; intensity: 0.9;"></a-entity>
+    <a-entity light="type: directional; color: #FFF; intensity: 0.6;" position="-1 4 2"></a-entity>
+
+    <!-- Marker Hiro -->
+    <a-marker preset="hiro">
+
+      <!-- กลุ่มโมเดลหลัก (จัดมุมมองด้านข้าง ปรับสเกลให้พอดีบน Marker) -->
+      <a-entity position="0 0 0" scale="0.8 0.8 0.8">
+
+        <!-- ================= 1. กระถางดอกไม้ (Pot) ================= -->
+        <a-entity id="flower-pot" position="0 0 0">
+          <!-- ตัวกระถางทรงกรวยตัด -->
+          <a-cone color="#D35400" radius-bottom="0.4" radius-top="0.6" height="0.8" position="0 0.4 0"></a-cone>
+          <!-- ขอบปากกระถางด้านบน -->
+          <a-torus color="#BA4A00" radius="0.6" radius-tubular="0.05" rotation="90 0 0" position="0 0.8 0"></a-torus>
+          <!-- ดินในกระถาง -->
+          <a-cylinder color="#3E2723" radius="0.55" height="0.05" position="0 0.78 0"></a-cylinder>
+        </a-entity>
+
+        <!-- ================= 2. ดอกทิวลิปชี้ขึ้นฟ้า (Tulip) ================= -->
+        <a-entity id="tulip" position="0 0.8 0">
+          <!-- ก้านดอกไม้สีเขียว -->
+          <a-cylinder color="#27AE60" radius="0.035" height="1.2" position="0 0.6 0"></a-cylinder>
+
+          <!-- ใบไม้ข้างซ้าย -->
+          <a-cone color="#2E7D32" radius-bottom="0.08" radius-top="0" height="0.6" 
+                  rotation="0 0 25" position="-0.15 0.4 0" scale="1 1 0.2"></a-cone>
+          <!-- ใบไม้ข้างขวา -->
+          <a-cone color="#2E7D32" radius-bottom="0.08" radius-top="0" height="0.6" 
+                  rotation="0 0 -25" position="0.15 0.3 0" scale="1 1 0.2"></a-cone>
+
+          <!-- ดอกทิวลิปสีชมพูบานเย็นชี้ขึ้นฟ้า -->
+          <a-entity position="0 1.25 0">
+            <!-- ฐานดอก -->
+            <a-sphere color="#E91E63" radius="0.22" scale="0.9 1.2 0.9" position="0 0 0"></a-sphere>
+            <!-- กลีบดอกทรงครึ่งทรงกลมประกบด้านบน -->
+            <a-cone color="#FF4081" radius-bottom="0.23" radius-top="0.05" height="0.25" position="0 0.1 0"></a-cone>
+          </a-entity>
+        </a-entity>
+
+        <!-- ================= 3. ผีเสื้อบินวนรอบดอกไม้ (Flying Butterfly) ================= -->
+        <!-- Pivot Point สำหรับหมุนผีเสื้อเป็นวงกลมรอบดอกทิวลิป -->
+        <a-entity position="0 1.9 0"
+                  animation="property: rotation; to: 0 360 0; loop: true; dur: 4500; easing: linear">
+          
+          <!-- ตัวผีเสื้อ (ตั้งพิกัดห่างจากศูนย์กลาง R = 0.85) -->
+          <a-entity position="0.85 0 0" rotation="0 90 15" scale="0.8 0.8 0.8" butterfly-animation>
+            
+            <!-- ลำตัวผีเสื้อ -->
+            <a-cylinder color="#212121" radius="0.02" height="0.25" rotation="90 0 0"></a-cylinder>
+            <!-- หัวผีเสื้อ -->
+            <a-sphere color="#000000" radius="0.03" position="0 0 0.13"></a-sphere>
+
+            <!-- ปีกซ้าย -->
+            <a-entity class="wing-left" position="-0.01 0 0">
+              <a-circle color="#FF9800" radius="0.18" animation="property: components.material.material.color; type: color; to: #E67E22; dir: alternate; loop: true; dur: 1000"
+                        scale="1 0.7 1" rotation="-90 0 0" position="-0.15 0 0.02"></a-circle>
+              <a-circle color="#F1C40F" radius="0.12" scale="1 0.7 1" rotation="-90 0 0" position="-0.1 0 -0.08"></a-circle>
+            </a-entity>
+
+            <!-- ปีกขวา -->
+            <a-entity class="wing-right" position="0.01 0 0">
+              <a-circle color="#FF9800" radius="0.18" animation="property: components.material.material.color; type: color; to: #E67E22; dir: alternate; loop: true; dur: 1000"
+                        scale="1 0.7 1" rotation="-90 0 0" position="0.15 0 0.02"></a-circle>
+              <a-circle color="#F1C40F" radius="0.12" scale="1 0.7 1" rotation="-90 0 0" position="0.1 0 -0.08"></a-circle>
+            </a-entity>
+
+          </a-entity>
+        </a-entity>
+
+      </a-entity>
+
+    </a-marker>
+
+    <!-- กล้องสำหรับ AR -->
+    <a-entity camera></a-entity>
+
+  </a-scene>
+
+</body>
+</html>
